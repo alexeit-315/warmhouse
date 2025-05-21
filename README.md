@@ -18,7 +18,17 @@
 - Изменять вручную значение переменной, отвечающей за измеряемую датчиком температуру (через эндпойнт PATCH /api/v1/sensors/:id/value) 
 - Изменять статус (вкл/выкл) датчика (через эндпойнт PUT /api/v1/sensors/:id) 
 Система не поддерживает функцию управления (даже, если управляемый датчик имеет исполнительный механизм, например, это термостат, структура данных, описывающая датчики, не имеет параметра, управляющего его уставкой; value – измеряемая температура и его ручное изменение пользователем у реального устройства не приведет к изменению поведения исполнительного устройства системы отопления); 
-// Sensor represents a smart home sensor type Sensor struct { ID int json:"id" Name string json:"name" Type SensorType json:"type" Location string json:"location" Value float64 json:"value" Unit string json:"unit" Status string json:"status" LastUpdated time.Time json:"last_updated" CreatedAt time.Time json:"created_at" }
+// Sensor represents a smart home sensor type Sensor struct {
+ID int json:"id"
+Name string json:"name"
+Type SensorType json:"type"
+Location string json:"location"
+Value float64 json:"value"
+Unit string json:"unit"
+Status string json:"status"
+LastUpdated time.Time json:"last_updated"
+CreatedAt time.Time json:"created_at"
+}
 
 **Мониторинг температуры:**
 
