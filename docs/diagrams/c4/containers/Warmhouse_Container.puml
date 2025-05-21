@@ -1,0 +1,56 @@
+@startuml
+title Warmhouse Container Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "User", "A homeowner, user of the warmhouse system")
+System_Ext(device, "Device", "Sensors and actuators")
+System_Ext(bank, "Bank System", "External bank system for processing payments")
+
+System_Boundary(WarmhouseSystem, "Warmhouse System") {
+Container(web_app, "Web Application", "Angular/React", "Provides UI for users to interact with the system")
+Container(mobile_app, "Mobile App", "Android/iOS", "Mobile application to interact with the system")
+Container(api_gateway, "API Gateway", "Spring Cloud Gateway", "Entry point for all client requests, routes to microservices")
+Container(auth_service, "Auth Service", "Spring Boot", "Handles user authentication and authorization")
+Container(device_service, "Device Service", "Spring Boot", "Manages devices, sensors and actuators")
+Container(user_service, "User Service", "Spring Boot", "Manages user profiles and preferences")
+Container(payment_service, "Payment Service", "Spring Boot", "Handles payments and billing")
+Container(notification_service, "Notification Service", "Spring Boot", "Sends notifications to users")
+Container(automation_service, "Automation Service", "Spring Boot", "Handles automation rules and scenarios")
+ContainerDb(postgres, "PostgreSQL", "Relational Database", "Stores structured data (users, devices, payments)")
+ContainerDb(openTSDB, "OpenTSDB", "Time Series Database", "Stores timelines (temperature, pressure, current, coolant flow)")
+Container(message_queue, "Message Queue", "RabbitMQ/Kafka", "Handles async communication between services")
+Container(logging_service, "Logging Service", "Spring Boot", "Handles log messages")
+}
+
+Rel(user, web_app, "Uses", "HTTPS")
+Rel(user, mobile_app, "Uses", "HTTPS")
+Rel(web_app, api_gateway, "API calls", "REST/HTTPS")
+Rel(mobile_app, api_gateway, "API calls", "REST/HTTPS")
+Rel(api_gateway, auth_service, "Authenticates", "REST/HTTPS")
+Rel(api_gateway, device_service, "Forwards requests", "REST/HTTPS")
+Rel(api_gateway, user_service, "Forwards requests", "REST/HTTPS")
+Rel(api_gateway, payment_service, "Forwards requests", "REST/HTTPS")
+Rel(api_gateway, automation_service, "Forwards requests", "REST/HTTPS")
+Rel(api_gateway, notification_service, "API calls", "REST/HTTPS")
+Rel(auth_service, postgres, "Reads/Writes", "JDBC")
+Rel(auth_service, user_service, "Reads/Writes", "REST/HTTPS")
+Rel(device_service, postgres, "Reads/Writes", "JDBC")
+Rel(device_service, device, "Controls", "MQTT")
+Rel(device_service, openTSDB, "Reads/Writes", "TSL")
+Rel(user_service, postgres, "Reads/Writes", "JDBC")
+Rel(user_service, message_queue, "Pub/Sub", "AMQP")
+Rel(user_service, payment_service, "Sends user data", "REST/HTTPS")
+Rel(payment_service, postgres, "Reads/Writes", "JDBC")
+Rel(payment_service, bank, "Process payments", "HTTPS")
+Rel(automation_service, message_queue, "Pub/Sub", "AMQP")
+Rel(notification_service, message_queue, "Pub/Sub", "AMQP")
+Rel(notification_service, user, "Sends notifications", "Push/Email/SMS")
+Rel(device_service, message_queue, "Pub/Sub", "AMQP")
+Rel(payment_service, message_queue, "Pub/Sub", "AMQP")
+Rel(api_gateway, logging_service, "Forwards requests", "REST/HTTPS")
+Rel(logging_service, message_queue, "Sub", "AMQP")
+
+@enduml

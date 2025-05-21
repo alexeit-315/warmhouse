@@ -1,0 +1,42 @@
+@startuml Notification Service Component Diagram
+
+title Component Diagram for Notification Service
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Container_Boundary(notification_service, "Notification Service") {
+    Component(notification_controller, "Notification Controller", "Spring MVC", "REST API endpoints for notifications")
+    Component(message_listener, "Message Listener", "Spring AMQP Listener", "Listens events from Message Queue")
+    Component(notification_processor, "Notification Processor", "Spring Service", "Handles and routes notifications")
+    Component(email_sender, "Email Sender", "Spring Component", "Sends email notifications")
+    Component(push_sender, "Push Sender", "Spring Component", "Sends push notifications")
+    Component(sms_sender, "SMS Sender", "Spring Component", "Sends SMS notifications")
+    Component(notification_repository, "Notification Repository", "Spring Data", "Database access layer for notifications")
+
+    Rel(notification_controller, notification_processor, "Uses", "Java method call")
+    Rel(message_listener, notification_processor, "Sends notifications", "AMQP")
+    Rel(notification_processor, email_sender, "Requests to send", "Java method call")
+    Rel(notification_processor, push_sender, "Requests to send", "Java method call")
+    Rel(notification_processor, sms_sender, "Requests to send", "Java method call")
+    Rel(notification_processor, notification_repository, "Reads/Writes notifications and settings", "JDBC")
+}
+
+ContainerDb(postgres, "PostgreSQL", "Relational Database", "Stores notification history, settings")
+Container(message_queue, "Message Queue", "RabbitMQ/Kafka")
+Container(api_gateway, "API Gateway", "Spring Cloud Gateway", "Entry point for all client requests, routes to microservices")
+System_Ext(email_service, "Email Service", "External email service (SendGrid for example)")
+System_Ext(push_service, "Push Notification Service", "External push service (FCM/APNS)")
+System_Ext(sms_gateway, "SMS Gateway", "External SMS gateway")
+
+Rel(email_sender, email_service, "Sends email", "HTTPS")
+Rel(push_sender, push_service, "Sends push", "HTTPS")
+Rel(sms_sender, sms_gateway, "Sends SMS", "HTTPS")
+Rel(notification_repository, postgres, "Read/Write", "JDBC")
+Rel(message_queue, message_listener, "Sub", "AMQP")
+
+' Внешние связи
+Rel_L(api_gateway, notification_controller, "Вызывает API", "REST/HTTPS")
+
+@enduml

@@ -1,0 +1,32 @@
+@startuml
+title Component Diagram for Logging Service
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Container_Boundary(logging_service, "Logging Service") {
+    Component(log_controller, "Log Controller", "Spring MVC", "Receives logs via REST и Message Queue")
+    Component(log_processor, "Log Processor", "Spring Component", "Filters, parses, enriches logs")
+    Component(log_analyzer, "Log Analyzer", "Spring Component", "Analyzes logs, detects anomalies")
+    Component(alert_manager, "Alert Manager", "Spring Component", "Generates alerts based on rules")
+    Component(log_dashboard, "Log Dashboard", "Grafana", "Visualizes logs and metrics")
+    ContainerDb(elasticsearch, "Elasticsearch", "Non-Relational Database", "Stores and indexes logs")
+
+
+    Rel(log_controller, log_processor, "Sends logs", "Java method call")
+    Rel(log_processor, elasticsearch, "Writes logs", "Elasticsearch API")
+    Rel(log_processor, log_analyzer, "Sends logs to analyze", "Java method call")
+    Rel(log_analyzer, alert_manager, "Sends alerts", "Java method call")
+    Rel(log_dashboard, elasticsearch, "Reads logs and metrics", "Elasticsearch API")
+}
+
+' Внешние связи
+Container(api_gateway, "API Gateway", "Spring Cloud Gateway", "Entry point for all client requests, routes to microservices")
+Container(message_queue, "Message Queue", "RabbitMQ/Kafka", "Handles async communication between services")
+ContainerDb(postgres, "PostgreSQL", "Relational Database", "Stores rules")
+
+Rel(alert_manager, postgres, "Reads rules", "JDBC")
+Rel(alert_manager, message_queue, "Sends alerts and notifications to Notification Service", "Pub")
+Rel(message_queue, log_controller, "Sub", "AMQP")
+
+Rel_R(api_gateway, log_controller, "Sends requests and logs", "REST/HTTPS")
+@enduml

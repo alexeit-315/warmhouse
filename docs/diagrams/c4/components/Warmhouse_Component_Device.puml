@@ -1,0 +1,39 @@
+@startuml Device Service Component Diagram
+
+title Component diagram for Device Service
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Container_Boundary(device_service, "Device Service") {
+    Component(device_controller, "Device Controller", "Spring MVC", "REST API endpoints for device")
+    Component(device_manager, "Device Manager", "Spring Service", "Handles sensors and actuators")
+    Component(device_repository, "Device Repository", "Spring Data", "Database access layer for device service")
+    Component(metrics_service, "Metrics Service", "Spring Service", "Sends metrics to OpenTSDB")
+    Component(mqtt_client, "MQTT Client", "Eclipse Paho", "Interacts devices via MQTT")
+    Component(event_publisher, "Event Publisher", "Spring AMQP", "Pubs events to Message Queue")
+    ContainerDb(openTSDB, "OpenTSDB", "Time Series Database")
+
+    Rel(device_controller, device_manager, "Uses", "Java API")
+    Rel(device_manager, device_repository, "Reads/Writes", "Java API")
+    Rel(device_manager, mqtt_client, "Sends commands, receives data", "Java API")
+    Rel(device_manager, metrics_service, "Sends data", "Java API")
+    Rel(metrics_service, openTSDB, "Writes metrics", "HTTP/TSL")
+    Rel(device_manager, event_publisher, "Pubs events", "Java API")
+}
+
+
+System_Ext(device, "Device", "Sensors and actuators")
+Container(api_gateway, "API Gateway", "Spring Cloud Gateway", "Entry point for all client requests, routes to microservices")
+Container(message_queue, "Message Queue", "RabbitMQ/Kafka")
+ContainerDb(postgres, "PostgreSQL", "Relational Database")
+
+Rel(mqtt_client, device, "Interacts", "MQTT")
+Rel(event_publisher, message_queue, "Sub/Pub", "AMQP")
+Rel(message_queue, device_manager, "Sub", "AMQP")
+Rel(device_repository, postgres, "Reads/Writes", "JDBC")
+
+Rel_R(api_gateway, device_controller, "Receives requests", "REST/HTTPS")
+
+@enduml

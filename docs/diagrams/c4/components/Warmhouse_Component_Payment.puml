@@ -1,0 +1,38 @@
+@startuml Payment Service Component Diagram
+
+title Component Diagram for Payment Service
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Container_Boundary(payment_service, "Payment Service") {
+    Component(payment_controller, "Payment Controller", "Spring MVC", "REST API endpoints for payment operations")
+    Component(billing_service, "Billing Service", "Spring Component", "Generates invoices and manages billing cycles")
+    Component(payment_processor, "Payment Processor", "Spring Component", "Handles payment processing logic")
+    Component(transaction_repository, "Transaction Repository", "Spring Data", "Database access layer for transactions")
+    Component(subscription_manager, "Subscription Manager", "Spring Component", "Manages recurring payments and subscriptions")
+
+    Rel(payment_controller, billing_service, "Uses", "Java method call")
+    Rel(payment_controller, payment_processor, "Uses", "Java method call")
+    Rel(payment_controller, subscription_manager, "Uses", "Java method call")
+    Rel(payment_processor, transaction_repository, "Reads/Writes payment data", "Java method call")
+    Rel(billing_service, transaction_repository, "Reads/Writes billing data", "Java method call")
+    Rel(subscription_manager, transaction_repository, "Reads/Writes subscription data", "Java method call")
+}
+
+System_Ext(bank_system, "Bank System", "External banking system")
+ContainerDb(postgres, "PostgreSQL", "Relational Database", "Stores billing, subscription and transaction data")
+Container(message_queue, "Message Queue", "RabbitMQ/Kafka", "Handles async communication between services")
+Container(user_service, "User Service", "Spring Boot")
+Container(api_gateway, "API Gateway", "Spring Cloud Gateway", "Entry point for all client requests, routes to microservices")
+
+
+Rel(payment_processor, bank_system, "Process payments", "HTTPS")
+Rel(transaction_repository, postgres, "Reads/Writes", "JDBC")
+Rel(payment_controller, user_service, "Gets user data", "REST/HTTPS")
+Rel(payment_processor, message_queue, "Publishes payment notifications", "AMQP")
+
+Rel_R(api_gateway, payment_controller, "Receives requests", "REST/HTTPS")
+
+@enduml

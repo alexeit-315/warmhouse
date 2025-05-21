@@ -1,0 +1,30 @@
+@startuml Auth Service Component Diagram
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+top to bottom direction
+
+title Component Diagram for Auth Service
+
+Container_Boundary(auth_service, "Auth Service") {
+    Component(auth_controller, "Auth Controller", "Spring MVC", "REST API endpoints for authentication")
+    Component(jwt_provider, "JWT Provider", "Java JWT", "Generates and validates JWT tokens")
+    Component(password_encoder, "Password Encoder", "BCrypt", "Hashes and verifies passwords")
+    Component(audit_logger, "Audit Logger", "Logback", "Logs security events")
+
+    Rel(auth_controller, jwt_provider, "Uses", "Java method call")
+    Rel(auth_controller, password_encoder, "Uses", "Java method call")
+    Rel(auth_controller, audit_logger, "Logs events", "Java method call")
+}
+
+ContainerDb(postgres, "PostgreSQL", "Relational Database", "Stores users, roles, sessions")
+Container(message_queue, "Message Queue", "RabbitMQ/Kafka", "Handles async communication between services")
+Container(user_service, "User Service", "", "Manages user profiles and preferences")
+Container(api_gateway, "API Gateway", "Spring Cloud Gateway", "Entry point for all client requests, routes to microservices")
+
+Rel(jwt_provider, postgres, "Reads keys", "JDBC")
+Rel(jwt_provider, user_service, "Syncing access rights", "REST/HTTPS")
+Rel(audit_logger, message_queue, "Pub", "AMPQ")
+Rel(password_encoder, postgres, "Reads/Writes file hashes", "JDBC")
+
+Rel_R(api_gateway, auth_controller, "Receives requests", "REST/HTTPS")
+@enduml

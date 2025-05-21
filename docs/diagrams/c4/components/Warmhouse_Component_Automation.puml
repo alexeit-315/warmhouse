@@ -1,0 +1,42 @@
+@startuml Automation Service Component Diagram
+
+title Component Diagram for Automation Service
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Container_Boundary(automation_service, "Automation Service") {
+    Component(automation_controller, "Automation Controller", "Spring MVC", "REST API endpoints for automation")
+    Component(rule_engine, "Rule Engine", "Drools/Spring", "Handles automation rules")
+    Component(scenario_executor, "Scenario Executor", "Spring Service", "Executes automation scripts")
+    Component(device_connector, "Device Connector", "Spring Integration", "Адаптер для взаимодействия с устройствами")
+    Component(event_processor, "Event Processor", "Spring Event", "Обработка событий от устройств")
+    Component(scheduler, "Scheduler", "Quartz", "Schedules time triggers")
+    Component(automation_repository, "Automation Repository", "Spring Data", "Database access layer for automation data")
+
+    Rel(automation_controller, rule_engine, "Uses", "Java method call")
+    Rel(automation_controller, scenario_executor, "Uses", "Java method call")
+    Rel(automation_controller, automation_repository, "Reads/Writes configs", "Java method call")
+    Rel(rule_engine, event_processor, "Sends events", "Java method call")
+    Rel(rule_engine, scheduler, "Registers time triggers", "Java method call")
+    Rel(rule_engine, device_connector, "Requests device operations", "Java method call")
+    Rel(rule_engine, automation_repository, "Reads/Writes rules, triggers, schedules", "Java method call")
+    Rel(scenario_executor, device_connector, "Requests device operations", "Java method call")
+    Rel(scenario_executor, automation_repository, "Reads/Writes scenarios", "Java method call")
+    Rel(scenario_executor, event_processor, "Sends events", "Java method call")
+    Rel(device_connector, event_processor, "Sends request to devices", "Java method call")
+
+}
+
+Container(api_gateway, "API Gateway", "Spring Cloud Gateway")
+Container(device_service, "Device Service", "Spring Boot")
+Container(message_queue, "Message Queue", "RabbitMQ/Kafka", "Handles async communication between services")
+ContainerDb(postgres, "PostgreSQL", "Relational Database", "Stores triggers, rules, scripts, schedules")
+
+Rel(device_connector, device_service, "Requests device metadata", "REST")
+Rel(event_processor, message_queue, "Sub/Pub", "AMQP")
+Rel(automation_repository, postgres, "Reads/Writes data", "JDBC")
+
+Rel_R(api_gateway, automation_controller, "Receives requests", "REST/HTTPS")
+@enduml

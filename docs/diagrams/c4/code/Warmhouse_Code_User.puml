@@ -1,0 +1,103 @@
+@startuml
+title User Service Code Diagram (Improved)
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+class UserController {
+    +createUser()
+    +updateUser()
+    +deleteUser()
+    +getUser()
+    +getUserProfile()
+    +updateUserProfile()
+    +getUserPreferences()
+    +updateUserPreferences()
+    +assignRole()
+    +revokeRole()
+    +getRoleList()
+}
+
+class UserService {
+    +createUser()
+    +updateUser()
+    +deleteUser()
+    +getUserById()
+    +getUserProfile()
+    +updateUserProfile()
+    +getUserPreferences()
+    +updateUserPreferences()
+}
+
+class RoleService {
+    +assignRole()
+    +revokeRole()
+    +getRoleList()
+    +updateRoleList()
+    +checkUserPermissions()
+}
+
+class UserValidator {
+    +validateUserCreate()
+    +validateUserUpdate()
+}
+
+class User {
+    +userId: UUID
+    +username: String
+    +isActive: Boolean
+}
+
+class Role {
+    +houseDescription: String
+    +houseAddress: String
+    +role: enum (Admin, User, Guest)
+    +isActive: Boolean
+}
+
+class UserPreference {
+    +theme: String
+    +language: String
+    +notificationsEnabled: Boolean
+}
+
+class UserProfile {
+    +name: String
+    +patronymic: String
+    +surname: String
+    +email: String
+    +phone: String
+    +registrationDate: Date
+}
+
+class ActivityTrackerService {
+    +logActivity()
+    +sendNotification()
+}
+
+' Repository Class
+class UserRepository {
+    +save()
+    +findById()
+    +delete()
+    +findProfileByUserId()
+    +findPreferencesByUserId()
+    +findRolesListByUserId()
+}
+
+UserController --> UserService
+UserController --> UserValidator
+UserController --> RoleService
+
+UserService --> UserRepository
+UserService --> RoleService
+UserService --> ActivityTrackerService
+
+RoleService --> UserRepository
+
+User "1" *-- "0..*" Role: has
+User "1" -- "1" UserPreference: has
+User "1" -- "1" UserProfile: has
+
+@enduml

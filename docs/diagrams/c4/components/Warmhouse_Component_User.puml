@@ -1,0 +1,35 @@
+@startuml User Service Component Diagram
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+title Component Diagram for User Service
+
+Container_Boundary(user_service, "User Service") {
+    Component(user_controller, "User Controller", "Spring MVC", "REST API endpoints for user profile management")
+    Component(profile_manager, "Profile Manager", "Spring Component", "Handles user profile")
+    Component(preference_service, "Preference Service", "Spring Component", "Handles user preferences")
+    Component(role_manager, "Role Manager", "Spring Component", "Handles roles and rights")
+    Component(activity_tracker, "Activity Tracker", "Logback", "Logs user events")
+    Component(user_repository, "User Repository", "Spring Data", "Database access layer for user service")
+
+    Rel(user_controller, profile_manager, "Uses", "Java method call")
+    Rel(user_controller, preference_service, "Uses", "Java method call")
+    Rel(profile_manager, role_manager, "Checks rights", "Java method call")
+    Rel(profile_manager, activity_tracker, "Logs activity", "Java method call")
+    Rel(profile_manager, user_repository, "Reads/Writes user profile data", "Java method call")
+    Rel(preference_service, user_repository, "Reads/Writes user preferences", "Java method call")
+    Rel(role_manager, user_repository, "Reads roles", "Java method call")
+}
+
+ContainerDb(postgres, "PostgreSQL", "Relational Database", "Stores roles, rights, profiles, preferences")
+Container(message_queue, "Message Queue", "RabbitMQ/Kafka", "Handles async communication between services")
+Container(auth_service, "Auth Service", "", "Handles user authentication and authorization")
+Container(payment_service, "Payment Service", "Spring Boot", "Handles payments and billing")
+Container(api_gateway, "API Gateway", "Spring Cloud Gateway", "Entry point for all client requests, routes to microservices")
+
+Rel(user_repository, postgres, "Reads/Writes", "JDBC")
+Rel(role_manager, auth_service, "Syncing access rights", "REST/HTTPS")
+Rel(user_controller, payment_service, "Syncing access rights", "REST/HTTPS")
+Rel(activity_tracker, message_queue, "Pub", "AMPQ")
+
+Rel_R(api_gateway, user_controller, "Receives requests", "REST/HTTPS")
+@enduml
