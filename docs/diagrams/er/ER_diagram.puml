@@ -1,0 +1,135 @@
+@startuml SmartHome ER Diagram
+
+' Сущности
+entity User {
+  * id : uuid <<PK>>
+  --
+  * username : varchar
+  * email : varchar
+  * password_hash : varchar
+  phone : varchar
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity House {
+  * id : uuid <<PK>>
+  --
+  * owner_id : uuid <<FK>>
+  * address : varchar
+  description : varchar
+  created_at : timestamp
+  is_active : boolean
+}
+
+entity HouseUserRole {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * house_id : uuid <<FK>>
+  * role : enum(Guest, User, Admin)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity Device {
+  * id : uuid <<PK>>
+  --
+  * type_id : uuid <<FK>>
+  * house_id : uuid <<FK>>
+  * serial_number : varchar
+  * status : enum(Available, Unavailable)
+  * power_status : enum(On, Off)
+  * open_status : enum(Open, Closed) <<nullable>>
+  description : varchar
+  battery_level : integer <<nullable>>
+  setpoint_value : decimal <<nullable>>
+  current_value : decimal <<nullable>>
+  last_seen : timestamp
+  firmware_version : varchar
+}
+
+entity DeviceType {
+  * id : uuid <<PK>>
+  --
+  * name : varchar
+  description : varchar
+  manufacturer : varchar
+  model : varchar
+}
+
+entity TelemetryData {
+  * id : uuid <<PK>>
+  --
+  * device_id : uuid <<FK>>
+  * metric_type : varchar
+  * value : decimal
+  * timestamp : timestamp
+}
+
+entity Schedule {
+  * id : uuid <<PK>>
+  --
+  * device_id : uuid <<FK>>
+  * action_type : varchar
+  * schedule_time : time
+  * days_of_week : varchar
+  description : varchar
+  is_active : boolean
+  created_at : timestamp
+}
+
+entity Scenario {
+  * id : uuid <<PK>>
+  --
+  * house_id : uuid <<FK>>
+  * name : varchar
+  description : varchar
+  is_active : boolean
+  created_at : timestamp
+}
+
+entity ScenarioAction {
+  * id : uuid <<PK>>
+  --
+  * scenario_id : uuid <<FK>>
+  * device_id : uuid <<FK>>
+  * action_type : varchar
+  * action_value : varchar
+  sequence_order : integer
+}
+
+entity Payment {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  amount : decimal
+  status : varchar
+  transaction_id : varchar
+  payment_date : timestamp
+}
+
+entity Notification {
+  * id : uuid <<PK>>
+  --
+  * user_id : uuid <<FK>>
+  * transport : varchar
+  * content : text
+  is_read : boolean
+  created_at : timestamp
+}
+
+' Связи
+User ||--o{ House : "owns"
+User ||--o{ HouseUserRole : "has access to"
+House ||--o{ HouseUserRole : "has users with roles"
+House ||--o{ Device : "contains"
+House ||--o{ Scenario : "has"
+DeviceType ||--o{ Device : "classifies"
+Device ||--o{ TelemetryData : "generates"
+Device ||--o{ Schedule : "has scheduled actions"
+Scenario ||--o{ ScenarioAction : "contains"
+User ||--o{ Payment : "makes"
+User ||--o{ Notification : "receives"
+
+@enduml
