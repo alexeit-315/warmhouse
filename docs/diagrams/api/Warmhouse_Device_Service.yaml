@@ -1,0 +1,412 @@
+openapi: 3.0.0
+info:
+  title: Device Service API
+  description: |
+    Микросервис для управления устройствами в системе "Умный дом".
+    Обеспечивает:
+    - Регистрацию и настройку устройств
+    - Чтение телеметрии
+  version: 2.0.0
+servers:
+  - url: http://localhost:8080/api/v2/devices
+    description: Dev Environment
+  - url: https://api.smarthome.example.com/api/v2/devices
+    description: Production
+
+tags:
+  - name: Devices
+    description: Управление устройствами
+  - name: DeviceTypes
+    description: Типы устройств
+  - name: Telemetry
+    description: Телеметрия устройств
+
+paths:
+  # ============ Управление устройствами ============
+  /houses/{houseId}/devices:
+    post:
+      tags: [Devices]
+      summary: Зарегистрировать новое устройство в доме
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: houseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceRegistrationRequest"
+      responses:
+        201:
+          description: Устройство зарегистрировано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceResponse"
+        400:
+          description: Невалидные данные
+        403:
+          description: Нет прав на регистрацию устройств
+
+    get:
+      tags: [Devices]
+      summary: Получить список устройств в доме
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: houseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: typeId
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по типу устройства
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [Available, Unavailable]
+          description: Статус устройства
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeviceResponse"
+
+  /devices/{deviceId}:
+    get:
+      tags: [Devices]
+      summary: Получить информацию об устройстве
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: deviceId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceDetailsResponse"
+        404:
+          description: Устройство не найдено
+
+    patch:
+      tags: [Devices]
+      summary: Обновить параметры устройства
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: deviceId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceUpdateRequest"
+      responses:
+        200:
+          description: Параметры обновлены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceResponse"
+        403:
+          description: Нет прав на изменение устройства
+
+    delete:
+      tags: [Devices]
+      summary: Удалить устройство
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: deviceId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Устройство удалено
+        403:
+          description: Нет прав на удаление устройства
+
+  # ============ Типы устройств ============
+  /device-types:
+    get:
+      tags: [DeviceTypes]
+      summary: Получить список типов устройств
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeviceTypeResponse"
+
+  # ============ Телеметрия ============
+  /devices/{deviceId}/telemetry:
+    get:
+      tags: [Telemetry]
+      summary: Получить телеметрию устройства
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: deviceId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+          description: Начальная дата
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+          description: Конечная дата
+        - in: query
+          name: metricType
+          schema:
+            type: string
+          description: Тип метрики
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TelemetryDataResponse"
+
+  # ============ Управление устройствами ============
+  /devices/{deviceId}/control:
+    post:
+      tags: [Devices]
+      summary: Отправить команду устройству
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: deviceId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceControlRequest"
+      responses:
+        202:
+          description: Команда принята в обработку
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceControlResponse"
+        403:
+          description: Нет прав на управление устройством
+        423:
+          description: Устройство временно недоступно
+
+components:
+  schemas:
+    # ===== Request Models =====
+    DeviceRegistrationRequest:
+      type: object
+      required:
+        - typeId
+        - serialNumber
+      properties:
+        typeId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        serialNumber:
+          type: string
+          example: "SN123456789"
+        description:
+          type: string
+          example: "Датчик температуры в гостиной"
+
+    DeviceUpdateRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          example: "Новое описание устройства"
+        status:
+          type: string
+          enum: [Available, Unavailable]
+          example: "Available"
+        setpointValue:
+          type: number
+          example: 22.5
+
+    DeviceControlRequest:
+      type: object
+      required:
+        - actionType
+      properties:
+        actionType:
+          type: string
+          enum: [TurnOn, TurnOff, SetValue, Open, Close]
+          example: "SetValue"
+        actionValue:
+          type: string
+          example: "23.5"
+
+
+    # ===== Response Models =====
+    DeviceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        typeId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        houseId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        serialNumber:
+          type: string
+          example: "SN123456789"
+        status:
+          type: string
+          example: "Available"
+        description:
+          type: string
+          example: "Датчик температуры"
+        lastSeen:
+          type: string
+          format: date-time
+          example: "2023-01-15T12:00:00Z"
+
+    DeviceDetailsResponse:
+      allOf:
+        - $ref: "#/components/schemas/DeviceResponse"
+        - type: object
+          properties:
+            powerStatus:
+              type: string
+              enum: [On, Off]
+              example: "On"
+            openStatus:
+              type: string
+              enum: [Open, Closed]
+              example: "Closed"
+            batteryLevel:
+              type: integer
+              example: 85
+            setpointValue:
+              type: number
+              example: 22.5
+            currentValue:
+              type: number
+              example: 21.3
+            deviceType:
+              $ref: "#/components/schemas/DeviceTypeResponse"
+
+    DeviceTypeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          example: "Термостат"
+        description:
+          type: string
+          example: "Умный термостат с Wi-Fi"
+        manufacturer:
+          type: string
+          example: "Xiaomi"
+        model:
+          type: string
+          example: "TH10"
+
+    TelemetryDataResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        deviceId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        metricType:
+          type: string
+          example: "Temperature"
+        value:
+          type: number
+          example: 23.5
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-01-15T12:00:00Z"
+
+    DeviceControlResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [Accepted, Queued, Failed]
+          example: "Accepted"
+        message:
+          type: string
+          example: "Command sent to device"
+        updatedDeviceState:
+          $ref: "#/components/schemas/DeviceDetailsResponse"
+
+
+  # ===== Security =====
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

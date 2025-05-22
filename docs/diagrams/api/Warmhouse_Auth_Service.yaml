@@ -1,0 +1,384 @@
+openapi: 3.0.0
+info:
+  title: Auth Service API
+  description: |
+    Микросервис для аутентификации, авторизации и управления сессиями в системе "Умный дом".
+    Обеспечивает:
+    - Регистрацию/вход/выход пользователей
+    - Управление JWT и сессионными токенами
+    - Проверку прав доступа к ресурсам
+  version: 2.0.0
+servers:
+  - url: http://localhost:8080/api/v2/auth
+    description: Dev Environment
+  - url: https://api.smarthome.example.com/api/v2/auth
+    description: Production
+
+tags:
+  - name: Authentication
+    description: Аутентификация и управление сессиями
+  - name: Tokens
+    description: Управление токенами доступа
+  - name: Permissions
+    description: Проверка прав доступа
+
+paths:
+  # ================== Аутентификация ==================
+  /register:
+    post:
+      tags: [Authentication]
+      summary: Регистрация нового пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        201:
+          description: Пользователь зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+          headers:
+            Location:
+              description: URL созданного пользователя
+              schema:
+                type: string
+        400:
+          description: Невалидные данные
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        409:
+          description: Пользователь уже существует
+
+  /login:
+    post:
+      tags: [Authentication]
+      summary: Вход в систему
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        200:
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        401:
+          description: Неверные учетные данные
+        403:
+          description: Аккаунт деактивирован
+        429:
+          description: Слишком много попыток входа
+
+  /logout:
+    post:
+      tags: [Authentication]
+      summary: Выход из системы
+      security:
+        - bearerAuth: []
+      responses:
+        204:
+          description: Успешный выход
+        401:
+          description: Невалидный токен
+
+  # ================== Управление токенами ==================
+  /token/refresh:
+    post:
+      tags: [Tokens]
+      summary: Обновление токена доступа
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        200:
+          description: Токен обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        401:
+          description: Невалидный refresh-токен
+
+  /token/validate:
+    post:
+      tags: [Tokens]
+      summary: Валидация токена доступа
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Токен валиден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenValidationResponse"
+        401:
+          description: Токен невалиден или истек
+
+  /sessions:
+    get:
+      tags: [Tokens]
+      summary: Получить активные сессии пользователя
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Список активных сессий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionResponse"
+        401:
+          description: Невалидный токен
+
+  # ================== Проверка прав ==================
+  /permissions/check:
+    post:
+      tags: [Permissions]
+      summary: Проверка прав доступа к ресурсу
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PermissionCheckRequest"
+      responses:
+        200:
+          description: Проверка выполнена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionCheckResponse"
+        403:
+          description: Доступ запрещен
+
+components:
+  schemas:
+    # ======== Request Models ========
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - password
+        - email
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          example: "user123"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: "securePass123!"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        phone:
+          type: string
+          example: "+79161234567"
+        houseId:
+          type: string
+          format: uuid
+          example: "aa1e8400-e29b-41d4-a716-446655441111"
+          description: "ID дома для автоматического назначения роли владельца"
+
+    LoginRequest:
+      type: object
+      required:
+        - login
+        - password
+      properties:
+        login:
+          type: string
+          description: "Email или username"
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          example: "securePass123!"
+        deviceInfo:
+          type: object
+          properties:
+            deviceId:
+              type: string
+              example: "device123"
+            deviceType:
+              type: string
+              enum: [MOBILE, WEB, DESKTOP]
+              example: "MOBILE"
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+        - deviceId
+      properties:
+        refreshToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        deviceId:
+          type: string
+          example: "device123"
+
+    PermissionCheckRequest:
+      type: object
+      required:
+        - resourceType
+        - action
+      properties:
+        resourceType:
+          type: string
+          enum: [DEVICE, HOUSE, SCENARIO, PAYMENT, USER]
+          example: "DEVICE"
+        action:
+          type: string
+          enum: [CREATE, READ, UPDATE, DELETE, EXECUTE]
+          example: "READ"
+        resourceId:
+          type: string
+          format: uuid
+          example: "aa1e8400-e29b-41d4-a716-446655441111"
+        houseId:
+          type: string
+          format: uuid
+          example: "aa1e8400-e29b-41d4-a716-446655441111"
+
+    # ======== Response Models ========
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expiresIn:
+          type: integer
+          example: 3600
+        sessionId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        userId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expiresIn:
+          type: integer
+          example: 3600
+
+    TokenValidationResponse:
+      type: object
+      properties:
+        isValid:
+          type: boolean
+          example: true
+        userId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleInfo"
+        sessionId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    RoleInfo:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [OWNER, ADMIN, USER, GUEST]
+          example: "USER"
+        houseId:
+          type: string
+          format: uuid
+          example: "aa1e8400-e29b-41d4-a716-446655441111"
+
+    PermissionCheckResponse:
+      type: object
+      properties:
+        hasAccess:
+          type: boolean
+          example: true
+        requiredRoles:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleInfo"
+
+    SessionResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        deviceInfo:
+          type: string
+          example: "Chrome, Windows 10"
+        ipAddress:
+          type: string
+          example: "192.168.1.1"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:00:00Z"
+        lastActivity:
+          type: string
+          format: date-time
+          example: "2023-01-15T12:00:00Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        errorCode:
+          type: string
+          example: "invalid_credentials"
+        errorDescription:
+          type: string
+          example: "Invalid username or password"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:00:00Z"
+
+  # ======== Security ========
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT для доступа к защищенным эндпоинтам"

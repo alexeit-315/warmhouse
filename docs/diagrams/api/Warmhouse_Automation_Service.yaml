@@ -1,0 +1,920 @@
+openapi: 3.0.0
+info:
+  title: Automation Service API
+  description: |
+    Микросервис для управления автоматизацией в системе "Умный дом".
+    Обеспечивает:
+    - Управление правилами автоматизации
+    - Создание и выполнение сценариев
+    - Настройку триггеров и расписаний
+    - Интеграцию с устройствами
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1/automation
+    description: Dev Environment
+  - url: https://api.smarthome.example.com/api/v1/automation
+    description: Production
+
+tags:
+  - name: Rules
+    description: Управление правилами автоматизации
+  - name: Scenarios
+    description: Управление сценариями автоматизации
+  - name: Triggers
+    description: Управление триггерами
+  - name: Schedules
+    description: Управление расписаниями
+  - name: Execution
+    description: Управление выполнением автоматизации
+
+paths:
+  # ================== Правила автоматизации ==================
+  /houses/{houseId}/rules:
+    post:
+      tags: [Rules]
+      summary: Создать новое правило автоматизации
+      parameters:
+        - in: path
+          name: houseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RuleCreateRequest"
+      responses:
+        201:
+          description: Правило создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuleResponse"
+          headers:
+            Location:
+              description: URL созданного правила
+              schema:
+                type: string
+        400:
+          description: Невалидные данные
+        403:
+          description: Нет прав на создание правил
+
+    get:
+      tags: [Rules]
+      summary: Получить список правил для дома
+      parameters:
+        - in: path
+          name: houseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: isActive
+          schema:
+            type: boolean
+          description: Фильтр по активности правил
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RuleResponse"
+
+  /rules/{ruleId}:
+    get:
+      tags: [Rules]
+      summary: Получить информацию о правиле
+      parameters:
+        - in: path
+          name: ruleId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuleDetailsResponse"
+        404:
+          description: Правило не найдено
+
+    put:
+      tags: [Rules]
+      summary: Обновить правило
+      parameters:
+        - in: path
+          name: ruleId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RuleUpdateRequest"
+      responses:
+        200:
+          description: Правило обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuleResponse"
+        403:
+          description: Нет прав на изменение правила
+
+    delete:
+      tags: [Rules]
+      summary: Удалить правило
+      parameters:
+        - in: path
+          name: ruleId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Правило удалено
+        403:
+          description: Нет прав на удаление правила
+
+  # ================== Сценарии автоматизации ==================
+  /houses/{houseId}/scenarios:
+    post:
+      tags: [Scenarios]
+      summary: Создать новый сценарий автоматизации
+      parameters:
+        - in: path
+          name: houseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScenarioCreateRequest"
+      responses:
+        201:
+          description: Сценарий создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScenarioResponse"
+          headers:
+            Location:
+              description: URL созданного сценария
+              schema:
+                type: string
+        400:
+          description: Невалидные данные
+
+    get:
+      tags: [Scenarios]
+      summary: Получить список сценариев для дома
+      parameters:
+        - in: path
+          name: houseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: isActive
+          schema:
+            type: boolean
+          description: Фильтр по активности сценариев
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScenarioResponse"
+
+  /scenarios/{scenarioId}:
+    get:
+      tags: [Scenarios]
+      summary: Получить информацию о сценарии
+      parameters:
+        - in: path
+          name: scenarioId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScenarioDetailsResponse"
+        404:
+          description: Сценарий не найден
+
+    put:
+      tags: [Scenarios]
+      summary: Обновить сценарий
+      parameters:
+        - in: path
+          name: scenarioId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScenarioUpdateRequest"
+      responses:
+        200:
+          description: Сценарий обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScenarioResponse"
+        403:
+          description: Нет прав на изменение сценария
+
+    delete:
+      tags: [Scenarios]
+      summary: Удалить сценарий
+      parameters:
+        - in: path
+          name: scenarioId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Сценарий удален
+        403:
+          description: Нет прав на удаление сценария
+
+  /scenarios/{scenarioId}/execute:
+    post:
+      tags: [Scenarios]
+      summary: Выполнить сценарий
+      parameters:
+        - in: path
+          name: scenarioId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        202:
+          description: Сценарий принят к выполнению
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutionResponse"
+        404:
+          description: Сценарий не найден
+
+  # ================== Триггеры ==================
+  /rules/{ruleId}/triggers:
+    post:
+      tags: [Triggers]
+      summary: Добавить триггер к правилу
+      parameters:
+        - in: path
+          name: ruleId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TriggerCreateRequest"
+      responses:
+        201:
+          description: Триггер добавлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TriggerResponse"
+        400:
+          description: Невалидные данные
+
+    get:
+      tags: [Triggers]
+      summary: Получить триггеры правила
+      parameters:
+        - in: path
+          name: ruleId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TriggerResponse"
+
+  /triggers/{triggerId}:
+    delete:
+      tags: [Triggers]
+      summary: Удалить триггер
+      parameters:
+        - in: path
+          name: triggerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Триггер удален
+        404:
+          description: Триггер не найден
+
+  # ================== Расписания ==================
+  /schedules:
+    post:
+      tags: [Schedules]
+      summary: Создать новое расписание
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleCreateRequest"
+      responses:
+        201:
+          description: Расписание создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleResponse"
+        400:
+          description: Невалидные данные
+
+    get:
+      tags: [Schedules]
+      summary: Получить список расписаний
+      parameters:
+        - in: query
+          name: houseId
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по дому
+        - in: query
+          name: isActive
+          schema:
+            type: boolean
+          description: Фильтр по активности
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScheduleResponse"
+
+  /schedules/{scheduleId}:
+    put:
+      tags: [Schedules]
+      summary: Обновить расписание
+      parameters:
+        - in: path
+          name: scheduleId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleUpdateRequest"
+      responses:
+        200:
+          description: Расписание обновлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleResponse"
+
+    delete:
+      tags: [Schedules]
+      summary: Удалить расписание
+      parameters:
+        - in: path
+          name: scheduleId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Расписание удалено
+        404:
+          description: Расписание не найдено
+
+  # ================== Выполнение ==================
+  /executions:
+    get:
+      tags: [Execution]
+      summary: Получить историю выполнения
+      parameters:
+        - in: query
+          name: houseId
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по дому
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+          description: Начальная дата периода
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+          description: Конечная дата периода
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExecutionHistoryResponse"
+
+components:
+  schemas:
+    # ======== Request Models ========
+    RuleCreateRequest:
+      type: object
+      required:
+        - name
+        - condition
+        - actions
+      properties:
+        name:
+          type: string
+          example: "Автоматическое выключение света"
+        description:
+          type: string
+          example: "Выключает свет при отсутствии движения"
+        condition:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [DEVICE_STATE, TIME, EVENT]
+              example: "DEVICE_STATE"
+            deviceId:
+              type: string
+              format: uuid
+              example: "550e8400-e29b-41d4-a716-446655440000"
+            property:
+              type: string
+              example: "motion"
+            operator:
+              type: string
+              enum: [EQ, NE, GT, LT, GTE, LTE]
+              example: "EQ"
+            value:
+              type: string
+              example: "false"
+        actions:
+          type: array
+          items:
+            type: object
+            properties:
+              deviceId:
+                type: string
+                format: uuid
+                example: "550e8400-e29b-41d4-a716-446655440001"
+              command:
+                type: string
+                example: "turnOff"
+              parameters:
+                type: object
+                additionalProperties: true
+        isActive:
+          type: boolean
+          example: true
+
+    RuleUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Новое название правила"
+        description:
+          type: string
+          example: "Обновленное описание"
+        isActive:
+          type: boolean
+          example: false
+
+    ScenarioCreateRequest:
+      type: object
+      required:
+        - name
+        - steps
+      properties:
+        name:
+          type: string
+          example: "Утренний сценарий"
+        description:
+          type: string
+          example: "Включает свет и кофеварку утром"
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [DEVICE_ACTION, DELAY, CONDITION]
+                example: "DEVICE_ACTION"
+              deviceId:
+                type: string
+                format: uuid
+                example: "550e8400-e29b-41d4-a716-446655440000"
+              action:
+                type: string
+                example: "turnOn"
+              parameters:
+                type: object
+                additionalProperties: true
+              delaySeconds:
+                type: integer
+                example: 10
+              condition:
+                $ref: "#/components/schemas/RuleCondition"
+        isActive:
+          type: boolean
+          example: true
+
+    ScenarioUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Обновленное название сценария"
+        description:
+          type: string
+          example: "Обновленное описание"
+        isActive:
+          type: boolean
+          example: false
+
+    TriggerCreateRequest:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: [DEVICE_EVENT, TIME, MANUAL]
+          example: "DEVICE_EVENT"
+        deviceId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        eventType:
+          type: string
+          example: "motionDetected"
+        cronExpression:
+          type: string
+          example: "0 0 7 * * ?"
+
+    ScheduleCreateRequest:
+      type: object
+      required:
+        - name
+        - cronExpression
+        - action
+      properties:
+        name:
+          type: string
+          example: "Ежедневное включение света"
+        description:
+          type: string
+          example: "Включает свет в 7 утра каждый день"
+        cronExpression:
+          type: string
+          example: "0 0 7 * * ?"
+        action:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [RULE, SCENARIO, DEVICE]
+              example: "SCENARIO"
+            targetId:
+              type: string
+              format: uuid
+              example: "550e8400-e29b-41d4-a716-446655440000"
+        isActive:
+          type: boolean
+          example: true
+
+    ScheduleUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Обновленное название расписания"
+        description:
+          type: string
+          example: "Обновленное описание"
+        isActive:
+          type: boolean
+          example: false
+
+    # ======== Response Models ========
+    RuleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          example: "Автоматическое выключение света"
+        description:
+          type: string
+          example: "Выключает свет при отсутствии движения"
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:00:00Z"
+
+    RuleDetailsResponse:
+      allOf:
+        - $ref: "#/components/schemas/RuleResponse"
+        - type: object
+          properties:
+            condition:
+              $ref: "#/components/schemas/RuleCondition"
+            actions:
+              type: array
+              items:
+                $ref: "#/components/schemas/RuleAction"
+            triggers:
+              type: array
+              items:
+                $ref: "#/components/schemas/TriggerResponse"
+
+    RuleCondition:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [DEVICE_STATE, TIME, EVENT]
+          example: "DEVICE_STATE"
+        deviceId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        property:
+          type: string
+          example: "motion"
+        operator:
+          type: string
+          enum: [EQ, NE, GT, LT, GTE, LTE]
+          example: "EQ"
+        value:
+          type: string
+          example: "false"
+
+    RuleAction:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        command:
+          type: string
+          example: "turnOff"
+        parameters:
+          type: object
+          additionalProperties: true
+
+    ScenarioResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          example: "Утренний сценарий"
+        description:
+          type: string
+          example: "Включает свет и кофеварку утром"
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:00:00Z"
+
+    ScenarioDetailsResponse:
+      allOf:
+        - $ref: "#/components/schemas/ScenarioResponse"
+        - type: object
+          properties:
+            steps:
+              type: array
+              items:
+                $ref: "#/components/schemas/ScenarioStep"
+
+    ScenarioStep:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [DEVICE_ACTION, DELAY, CONDITION]
+          example: "DEVICE_ACTION"
+        deviceId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        action:
+          type: string
+          example: "turnOn"
+        parameters:
+          type: object
+          additionalProperties: true
+        delaySeconds:
+          type: integer
+          example: 10
+        condition:
+          $ref: "#/components/schemas/RuleCondition"
+
+    TriggerResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        type:
+          type: string
+          enum: [DEVICE_EVENT, TIME, MANUAL]
+          example: "DEVICE_EVENT"
+        deviceId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        eventType:
+          type: string
+          example: "motionDetected"
+        cronExpression:
+          type: string
+          example: "0 0 7 * * ?"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:00:00Z"
+
+    ScheduleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          example: "Ежедневное включение света"
+        description:
+          type: string
+          example: "Включает свет в 7 утра каждый день"
+        cronExpression:
+          type: string
+          example: "0 0 7 * * ?"
+        action:
+          $ref: "#/components/schemas/ScheduleAction"
+        isActive:
+          type: boolean
+          example: true
+        nextExecution:
+          type: string
+          format: date-time
+          example: "2023-01-16T07:00:00Z"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:00:00Z"
+
+    ScheduleAction:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [RULE, SCENARIO, DEVICE]
+          example: "SCENARIO"
+        targetId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    ExecutionResponse:
+      type: object
+      properties:
+        executionId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [PENDING, RUNNING, COMPLETED, FAILED]
+          example: "PENDING"
+        startedAt:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:00:00Z"
+
+    ExecutionHistoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        targetType:
+          type: string
+          enum: [RULE, SCENARIO, SCHEDULE]
+          example: "SCENARIO"
+        targetId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [SUCCESS, FAILED]
+          example: "SUCCESS"
+        startedAt:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:00:00Z"
+        completedAt:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:00:05Z"
+        executionTimeMs:
+          type: integer
+          example: 5000
+        errorMessage:
+          type: string
+          example: "Device not available"
+
+  # ======== Security ========
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT для доступа к защищенным эндпоинтам"

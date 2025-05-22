@@ -1,0 +1,517 @@
+openapi: 3.0.0
+info:
+  title: User Service API
+  description: API для управления пользователями, домами, ролями и связанными сущностями в системе "Умный дом"
+  version: 2.0.0
+servers:
+  - url: http://localhost:8080/api/v2
+    description: Dev Server
+  - url: https://api.smarthome.example.com/api/v2
+    description: Production Server
+
+tags:
+  - name: Users
+    description: Управление пользователями
+  - name: Profiles
+    description: Управление профилями пользователей
+  - name: Preferences
+    description: Управление настройками пользователей
+  - name: Roles
+    description: Управление ролями пользователей в домах
+
+paths:
+  # ====================== User Management ======================
+  /users:
+    post:
+      tags: [Users]
+      summary: Создать нового пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateRequest"
+      responses:
+        201:
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+          headers:
+            Location:
+              description: URL созданного пользователя
+              schema:
+                type: string
+        400:
+          description: Невалидные данные
+        409:
+          description: Пользователь уже существует
+
+    get:
+      tags: [Users]
+      summary: Поиск пользователей
+      parameters:
+        - in: query
+          name: username
+          schema:
+            type: string
+          description: Фильтр по имени пользователя
+        - in: query
+          name: email
+          schema:
+            type: string
+            format: email
+          description: Фильтр по email
+        - in: query
+          name: isActive
+          schema:
+            type: boolean
+          description: Фильтр по активности пользователя
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserResponse"
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Получить пользователя по ID
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetailsResponse"
+        404:
+          description: Пользователь не найден
+
+    put:
+      tags: [Users]
+      summary: Обновить данные пользователя
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateRequest"
+      responses:
+        200:
+          description: Данные обновлены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetailsResponse"
+        404:
+          description: Пользователь не найден
+
+    delete:
+      tags: [Users]
+      summary: Удалить пользователя
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Пользователь удалён
+        404:
+          description: Пользователь не найден
+
+  # ====================== Profile Management ======================
+  /users/{userId}/profile:
+    get:
+      tags: [Profiles]
+      summary: Получить профиль пользователя
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfileResponse"
+        404:
+          description: Профиль не найден
+
+    patch:
+      tags: [Profiles]
+      summary: Обновить профиль пользователя
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdateRequest"
+      responses:
+        200:
+          description: Профиль обновлён
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfileResponse"
+        400:
+          description: Невалидные данные
+
+  # ====================== Preferences Management ======================
+  /users/{userId}/preferences:
+    get:
+      tags: [Preferences]
+      summary: Получить настройки пользователя
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPreferencesResponse"
+        404:
+          description: Настройки не найдены
+
+    patch:
+      tags: [Preferences]
+      summary: Обновить настройки пользователя
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserPreferencesUpdateRequest"
+      responses:
+        200:
+          description: Настройки обновлены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPreferencesResponse"
+        400:
+          description: Невалидные данные
+
+  # ====================== Role Management ======================
+  /users/{userId}/roles:
+    get:
+      tags: [Roles]
+      summary: Получить список ролей пользователя
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Успешный запрос
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleResponse"
+
+    post:
+      tags: [Roles]
+      summary: Назначить роль пользователю в доме
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleAssignRequest"
+      responses:
+        201:
+          description: Роль назначена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+          headers:
+            Location:
+              description: URL созданной роли
+              schema:
+                type: string
+        403:
+          description: Недостаточно прав
+        404:
+          description: Пользователь или дом не найден
+
+  /users/{userId}/roles/{roleId}:
+    delete:
+      tags: [Roles]
+      summary: Отозвать роль пользователя
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: roleId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Роль отозвана
+        403:
+          description: Недостаточно прав
+        404:
+          description: Роль не найдена
+
+components:
+  schemas:
+    # ====================== Core Models ======================
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        username:
+          type: string
+          example: "user123"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:00:00Z"
+
+    UserDetailsResponse:
+      allOf:
+        - $ref: "#/components/schemas/UserResponse"
+        - type: object
+          properties:
+            phone:
+              type: string
+              example: "+79161234567"
+            updatedAt:
+              type: string
+              format: date-time
+              example: "2023-01-15T10:00:00Z"
+
+    UserProfileResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Иван"
+        patronymic:
+          type: string
+          example: "Иванович"
+        surname:
+          type: string
+          example: "Петров"
+        email:
+          type: string
+          format: email
+          example: "ivan@example.com"
+        phone:
+          type: string
+          example: "+79161234567"
+        registrationDate:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:00:00Z"
+
+    UserPreferencesResponse:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [light, dark, system]
+          example: "dark"
+        language:
+          type: string
+          example: "ru-RU"
+        notificationsEnabled:
+          type: boolean
+          example: true
+
+    RoleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "aa1e8400-e29b-41d4-a716-446655441111"
+        houseId:
+          type: string
+          format: uuid
+          example: "bb1e8400-e29b-41d4-a716-446655442222"
+        houseAddress:
+          type: string
+          example: "ул. Примерная, 123"
+        role:
+          type: string
+          enum: [Admin, User, Guest]
+          example: "User"
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:00:00Z"
+
+    # ====================== Request Models ======================
+    UserCreateRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          example: "user123"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: "securePass123!"
+        phone:
+          type: string
+          example: "+79161234567"
+        isActive:
+          type: boolean
+          example: true
+
+    UserUpdateRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          example: "newUsername"
+        email:
+          type: string
+          format: email
+          example: "new@example.com"
+        phone:
+          type: string
+          example: "+79161234567"
+        isActive:
+          type: boolean
+          example: false
+
+    UserProfileUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Иван"
+        patronymic:
+          type: string
+          example: "Иванович"
+        surname:
+          type: string
+          example: "Петров"
+        email:
+          type: string
+          format: email
+          example: "new@example.com"
+        phone:
+          type: string
+          example: "+79161234567"
+
+    UserPreferencesUpdateRequest:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [light, dark, system]
+          example: "light"
+        language:
+          type: string
+          example: "en-US"
+        notificationsEnabled:
+          type: boolean
+          example: false
+
+    RoleAssignRequest:
+      type: object
+      required:
+        - houseId
+        - role
+      properties:
+        houseId:
+          type: string
+          format: uuid
+          example: "aa1e8400-e29b-41d4-a716-446655441111"
+        role:
+          type: string
+          enum: [Admin, User, Guest]
+          example: "Admin"
