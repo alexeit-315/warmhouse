@@ -16,7 +16,7 @@
 
 Пользователи могут 
 - Изменять вручную значение переменной, отвечающей за измеряемую датчиком температуру (через эндпойнт PATCH /api/v1/sensors/:id/value);  
-- Изменять статус (вкл/выкл) датчика (через эндпойнт PUT /api/v1/sensors/:id).
+- Изменять статус (вкл/выкл) датчика (через эндпойнт PUT /api/v1/sensors/:id).  
 Система не поддерживает функцию управления (даже, если управляемый датчик имеет исполнительный механизм, например, это термостат, структура данных, описывающая датчики, не имеет параметра, управляющего его уставкой; value – измеряемая температура и его ручное изменение пользователем у реального устройства не приведет к изменению поведения исполнительного устройства системы отопления);  
 ```
 // Sensor represents a smart home sensor type Sensor struct {  
@@ -95,6 +95,11 @@ const (
 ```markdown
 [Диаграмма компонента Auth в модели C4](https://github.com/alexeit-315/warmhouse/blob/main/docs/diagrams/c4/components/Warmhouse_Component_Auth.puml)
 [Диаграмма компонента Automation в модели C4](https://github.com/alexeit-315/warmhouse/blob/main/docs/diagrams/c4/components/Warmhouse_Component_Automation.puml)
+[Диаграмма компонента Device в модели C4](https://github.com/alexeit-315/warmhouse/blob/main/docs/diagrams/c4/components/Warmhouse_Component_Device.puml)
+[Диаграмма компонента Logging в модели C4](https://github.com/alexeit-315/warmhouse/blob/main/docs/diagrams/c4/components/Warmhouse_Component_Logging.puml)
+[Диаграмма компонента Notification в модели C4](https://github.com/alexeit-315/warmhouse/blob/main/docs/diagrams/c4/components/Warmhouse_Component_Notification.puml)
+[Диаграмма компонента Payment в модели C4](https://github.com/alexeit-315/warmhouse/blob/main/docs/diagrams/c4/components/Warmhouse_Component_Payment.puml)
+[Диаграмма компонента User в модели C4](https://github.com/alexeit-315/warmhouse/blob/main/docs/diagrams/c4/components/Warmhouse_Component_User.puml)
 ```
 
 **Диаграмма кода (Code)**
