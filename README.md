@@ -72,27 +72,28 @@ CreatedAt time.Time json:"created_at"
 [Диаграмма контекста в модели C4](https://github.com/alexeit-315/warmhouse/blob/main/docs/diagrams/c4/context/Warmhouse_Context.puml)
 ```
 
-Замените `Текст ссылки` текстом, который хотите использовать для ссылки. Вместо `URL` вставьте адрес, на который должна вести ссылка. Например:
-
-```markdown
-[Посетите Яндекс](https://ya.ru/)
-```
-
 # Задание 2. Проектирование микросервисной архитектуры
 
 В этом задании вам нужно предоставить только диаграммы в модели C4. Мы не просим вас отдельно описывать получившиеся микросервисы и то, как вы определили взаимодействия между компонентами To-Be системы. Если вы правильно подготовите диаграммы C4, они и так это покажут.
 
 **Диаграмма контейнеров (Containers)**
 
-Добавьте диаграмму.
+```markdown
+[Диаграмма контейнеров в модели C4](https://github.com/alexeit-315/warmhouse/blob/main/docs/diagrams/c4/containers/Warmhouse_Container.puml)
+```
 
 **Диаграмма компонентов (Components)**
 
-Добавьте диаграмму для каждого из выделенных микросервисов.
+```markdown
+[Диаграмма компонента Auth в модели C4](https://github.com/alexeit-315/warmhouse/blob/main/docs/diagrams/c4/components/Warmhouse_Component_Auth.puml)
+[Диаграмма компонента Automation в модели C4](https://github.com/alexeit-315/warmhouse/blob/main/docs/diagrams/c4/components/Warmhouse_Component_Automation.puml)
+```
 
 **Диаграмма кода (Code)**
 
-Добавьте одну диаграмму или несколько.
+```markdown
+[Диаграмма кода контейнера UserService в модели C4](https://github.com/alexeit-315/warmhouse/blob/main/docs/diagrams/c4/code/Warmhouse_Code_User.puml)
+```
 
 # Задание 3. Разработка ER-диаграммы
 
