@@ -36,7 +36,7 @@ CreatedAt time.Time json:"created_at"
 Пользователи могут получить 
 - Список всех датчиков (через эндпойнт GET /api/v1/sensors);
 - Состояние датчика по ID (через эндпойнт GET /api/v1/sensors/:id); 
-- Состояние датчика температуры по его местоположению (через эндпойнт GET /api/v1/sensors/temperature/:location).
+- Состояние датчика температуры по его местоположению (через эндпойнт GET /api/v1/sensors/temperature/:location).  
 Система поддерживает только датчики температуры
 ```
 // SensorType represents the type of sensor
